@@ -34,7 +34,7 @@ def cmd_save(args: argparse.Namespace, conn) -> int:
 def cmd_resume(args: argparse.Namespace, conn) -> int:
     snap = storage.latest(conn)
     if snap is None:
-        print('No snapshots yet. Save one with: switchlog save "what you are doing"')
+        print('No snapshots yet. Save one with: switchlog save "what you are doing"', file=sys.stderr)
         return 1
     print(format_snapshot(snap))
     return 0
