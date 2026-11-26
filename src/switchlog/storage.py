@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .models import Snapshot
 from .paths import db_path
+from datetime import datetime
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -44,3 +45,41 @@ def save(conn: sqlite3.Connection, snap: Snapshot) -> Snapshot:
     conn.commit()
     snap.id = cur.lastrowid
     return snap
+def _row_to_snapshot(row: sqlite3.Row) -> Snapshot:
+    return Snapshot(
+        id=row["id"],
+        uuid=row["uuid"],
+        created_at=datetime.fromisoformat(row["created_at"]),
+        task=row["task"],
+        next_step=row["next_step"],
+        notes=row["notes"],
+        links=json.loads(row["links"]),
+        tags=json.loads(row["tags"]),
+        device=row["device"],
+    )
+def list_snapshots(
+    conn: sqlite3.Connection, limit: int | None = None, tag: str | None = None ) -> list[Snapshot]:
+    rows = conn.execute(
+        "SELECT * FROM snapshots ORDER BY created_at DESC, id DESC"
+    ).fetchall()
+    snaps = [_row_to_snapshot(r) for r in rows]
+    if tag is not None:
+        snaps = [s for s in snaps if tag in s.tags]
+    if limit is not None:
+        snaps = snaps[:limit]
+    return snaps
+def latest(conn: sqlite3.Connection) -> Snapshot | None:
+    row = conn.execute(
+        "SELECT * FROM snapshots ORDER BY created_at DESC, id DESC LIMIT 1"
+    ).fetchone()
+    return _row_to_snapshot(row) if row else None
+def get(conn: sqlite3.Connection, snapshot_id: int) -> Snapshot | None:
+    row = conn.execute(
+        "SELECT * FROM snapshots WHERE id = ?", (snapshot_id,)
+    ).fetchone()
+    return _row_to_snapshot(row) if row else None
+def delete(conn: sqlite3.Connection, snapshot_id: int) -> bool:
+    cur = conn.execute("DELETE FROM snapshots WHERE id = ?", (snapshot_id,))
+    conn.commit()
+    return cur.rowcount > 0
+
