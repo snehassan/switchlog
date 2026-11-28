@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 
 from .models import Snapshot
 from .paths import db_path
-from datetime import datetime
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (

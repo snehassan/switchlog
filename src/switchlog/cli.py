@@ -6,6 +6,7 @@ import sys
 from . import storage
 from .models import Snapshot
 
+
 def format_snapshot(s: Snapshot) -> str:
     lines = [
         f"#{s.id}  {s.task}",
